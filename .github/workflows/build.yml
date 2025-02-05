@@ -1,0 +1,99 @@
+name: Build moonlight-qt
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qt6-base-dev qt6-declarative-dev libqt6svg6-dev libegl1-mesa-dev libgl1-mesa-dev libopus-dev libsdl2-dev libsdl2-ttf-dev libssl-dev libavcodec-dev libavformat-dev libswscale-dev libva-dev libvdpau-dev libxkbcommon-dev wayland-protocols libdrm-dev
+
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2.0.0
+        with:
+          version: 6.5.0
+          target: desktop
+          arch: linux64
+
+      - name: Build
+        run: |
+          qmake6 moonlight-qt.pro
+          make
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: moonlight-qt-linux
+          path: build/
+
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2.0.0
+        with:
+          version: 6.5.0
+          target: desktop
+          arch: win64_msvc2019_64
+
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+
+      - name: Build
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
+          qmake
+          nmake
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: moonlight-qt-windows
+          path: build/
+
+  build-macos:
+    name: Build on macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2.0.0
+        with:
+          version: 6.5.0
+          target: desktop
+          arch: clang_64
+
+      - name: Initialize submodules
+        run: git submodule update --init --recursive
+
+      - name: Build
+        run: |
+          qmake6 moonlight-qt.pro
+          make
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: moonlight-qt-macos
+          path: build/
